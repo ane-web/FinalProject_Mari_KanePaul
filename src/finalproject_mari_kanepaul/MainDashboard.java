@@ -4,9 +4,6 @@
  */
 package finalproject_mari_kanepaul;
 
-import java.awt.Font;
-import java.awt.event.ComponentAdapter;
-import javax.swing.JButton;
 import javax.swing.JLayeredPane;
 
 /**
@@ -15,7 +12,6 @@ import javax.swing.JLayeredPane;
  */
 public class MainDashboard extends javax.swing.JFrame {
     
-    private JButton floatingButton;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainDashboard.class.getName());
 
     /**
@@ -23,64 +19,24 @@ public class MainDashboard extends javax.swing.JFrame {
      */
     public MainDashboard() {
         initComponents();
-        styleDashboard();
         loadBookCards();
-        initFloatingButton();
+        JLayeredPane layeredPane = getLayeredPane();
+        layeredPane.add(floatingButton, JLayeredPane.PALETTE_LAYER);
+        
     }
     
-    private void initFloatingButton() {
-   
-    floatingButton = new javax.swing.JButton("+");
-    floatingButton.setFont(new java.awt.Font("SansSerif", Font.PLAIN, 28));
-    floatingButton.setBackground(new java.awt.Color(25, 118, 210)); // Primary Blue
-    floatingButton.setForeground(java.awt.Color.WHITE);
-    floatingButton.setFocusPainted(false);
-    floatingButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-    floatingButton.putClientProperty("JButton.arc", 999); 
-    int buttonSize = 56;
-    floatingButton.setSize(buttonSize, buttonSize);
-    JLayeredPane layeredPane = getLayeredPane();
-    layeredPane.add(floatingButton, javax.swing.JLayeredPane.PALETTE_LAYER);
-    
-    this.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(java.awt.event.ComponentEvent e) {
-            positionFloatingButton();
-        }
-    });
-    positionFloatingButton();
-    floatingButton.addActionListener(e -> {
-        AddBookDialog dialog = new AddBookDialog(this, true);
-    dialog.setVisible(true);
-    });
-}
-
-private void positionFloatingButton() {
+    private void positionFloatingButton() {
     if (floatingButton == null) return;
     
     JLayeredPane layeredPane = getLayeredPane();
-    
-    
     int padding = 28; 
     
     int x = layeredPane.getWidth() - floatingButton.getWidth() - padding;
     int y = layeredPane.getHeight() - floatingButton.getHeight() - padding;
     
     floatingButton.setLocation(x, y);
-} 
-    
-    private void styleDashboard() {
-    searchBar.putClientProperty("JTextField.arc", 12);
-    jComboBox1.putClientProperty("JComponent.roundRect", true);
-    jComboBox2.putClientProperty("JComponent.roundRect", true);
-    booksGridPanel.setBackground(new java.awt.Color(250, 250, 250));
-    searchBar.putClientProperty("JTextField.placeholderText", "Search by title, author, ISBN");
-    searchBar.putClientProperty("JTextField.showClearButton", true);
-    totalBooksCard.putClientProperty("FlatLaf.style", "arc: 12");
-    availableCard.putClientProperty("FlatLaf.style", "arc: 12");
-    checkedOutCard.putClientProperty("FlatLaf.style", "arc: 12");
 }
-    
+ 
     private void loadBookCards() {
     
     booksGridPanel.removeAll();
@@ -88,7 +44,7 @@ private void positionFloatingButton() {
     jLabel3.setText(String.valueOf(booksDAO.countAllCopies()));
     jLabel5.setText(String.valueOf(booksDAO.countAvailableCopies()));
     jLabel7.setText(String.valueOf(booksDAO.countCheckedOutCopies()));
-
+    
     for (Object[] row : booksDAO.getBookCards()) {
         String title = (String) row[1];
         String author = (String) row[2];
@@ -113,7 +69,6 @@ private void positionFloatingButton() {
 
         booksGridPanel.add(card);
     }
-
     booksGridPanel.revalidate();
     booksGridPanel.repaint();
 }
@@ -128,27 +83,51 @@ private void positionFloatingButton() {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        floatingButton = new javax.swing.JButton();
+        floatingButton.setSize(56,56);
+        floatingButton.putClientProperty("JButton.arc", 999);
         headerWrapperPanel = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         statsPanel = new javax.swing.JPanel();
         totalBooksCard = new javax.swing.JPanel();
+        totalBooksCard.putClientProperty("FlatLaf.style", "arc: 12");
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         availableCard = new javax.swing.JPanel();
+        availableCard.putClientProperty("FlatLaf.style", "arc: 12");
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         checkedOutCard = new javax.swing.JPanel();
+        checkedOutCard.putClientProperty("FlatLaf.style", "arc: 12");
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         filterBarPanel = new javax.swing.JPanel();
         searchBar = new javax.swing.JTextField();
+        searchBar.putClientProperty("JTextField.arc", 12);
+        searchBar.putClientProperty("JTextField.placeholderText", "Search by title, author, ISBN...");
+        searchBar.putClientProperty("JTextField.showClearButton", true);
         jComboBox1 = new javax.swing.JComboBox<>();
+        jComboBox1.putClientProperty("JComponent.roundRect", true);
         jComboBox2 = new javax.swing.JComboBox<>();
+        jComboBox2.putClientProperty("JComponent.roundRect", true);
         jScrollPane1 = new javax.swing.JScrollPane();
         booksGridPanel = new javax.swing.JPanel();
 
+        floatingButton.setBackground(new java.awt.Color(25, 118, 210));
+        floatingButton.setFont(new java.awt.Font("SansSerif", 0, 28)); // NOI18N
+        floatingButton.setForeground(new java.awt.Color(255, 255, 255));
+        floatingButton.setText("+");
+        floatingButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        floatingButton.setFocusPainted(false);
+        floatingButton.addActionListener(this::floatingButtonActionPerformed);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
         headerWrapperPanel.setBackground(new java.awt.Color(250, 250, 250));
         headerWrapperPanel.setPreferredSize(new java.awt.Dimension(1000, 320));
@@ -335,6 +314,14 @@ private void positionFloatingButton() {
 
     }//GEN-LAST:event_searchBarFocusLost
 
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        positionFloatingButton();
+    }//GEN-LAST:event_formComponentResized
+
+    private void floatingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floatingButtonActionPerformed
+        new AddBookDialog(this,true).setVisible(true);
+    }//GEN-LAST:event_floatingButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -365,6 +352,7 @@ private void positionFloatingButton() {
     private javax.swing.JPanel booksGridPanel;
     private javax.swing.JPanel checkedOutCard;
     private javax.swing.JPanel filterBarPanel;
+    private javax.swing.JButton floatingButton;
     private javax.swing.JPanel headerWrapperPanel;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;

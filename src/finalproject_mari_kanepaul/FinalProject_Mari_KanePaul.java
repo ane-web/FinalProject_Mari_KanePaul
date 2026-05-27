@@ -20,6 +20,8 @@ public class FinalProject_Mari_KanePaul {
     java.awt.EventQueue.invokeLater(() -> {
         new MainDashboard().setVisible(true);
     });
+    
     }
+    
     
 }
