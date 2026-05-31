@@ -14,6 +14,24 @@ import java.sql.Statement;
  */
 public class ShelvesDAO {
     
+    public java.util.List<String> getShelfCodes() {
+    java.util.List<String> shelfCodes = new java.util.ArrayList<>();
+    String sql = "SELECT shelf_code FROM shelves ORDER BY shelf_code";
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql);
+         ResultSet rs = stmt.executeQuery()) {
+
+        while (rs.next()) {
+            shelfCodes.add(rs.getString("shelf_code"));
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return shelfCodes;
+}
+    
     public int getOrCreateShelfId(String shelfCode) {
         String selectSql = "SELECT shelf_id FROM shelves WHERE shelf_code = ?";
         String insertSql = "INSERT INTO shelves (floor, section, shelf_code) VALUES (?, ?, ?)";

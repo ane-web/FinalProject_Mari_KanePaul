@@ -19,6 +19,13 @@ public class BookCardComponent extends javax.swing.JPanel {
         styleCard();
     }
     
+    public void setActionListener(java.awt.event.ActionListener listener) {
+    for (java.awt.event.ActionListener oldListener : actionButton.getActionListeners()) {
+        actionButton.removeActionListener(oldListener);
+    }
+    actionButton.addActionListener(listener);
+}
+    
     public void setBookData(String title, String author, String isbn, String shelf,
         boolean checkedOut, String borrower, String dueDate) {
 
@@ -62,6 +69,23 @@ public class BookCardComponent extends javax.swing.JPanel {
 
     jButton1.setText("\u22EE");
     }
+    
+    public void setMenuActions(java.awt.event.ActionListener editListener,
+        java.awt.event.ActionListener deleteListener) {
+
+    javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+
+    javax.swing.JMenuItem editItem = new javax.swing.JMenuItem("Edit");
+    javax.swing.JMenuItem deleteItem = new javax.swing.JMenuItem("Delete");
+
+    editItem.addActionListener(editListener);
+    deleteItem.addActionListener(deleteListener);
+
+    menu.add(editItem);
+    menu.add(deleteItem);
+
+    jButton1.addActionListener(e -> menu.show(jButton1, 0, jButton1.getHeight()));
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -162,10 +186,10 @@ public class BookCardComponent extends javax.swing.JPanel {
                     .addComponent(dueLabel)
                     .addComponent(borrowerLabel)
                     .addComponent(shelfLabel)
-                    .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 228, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(authorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(isbnLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(29, Short.MAX_VALUE))
+                    .addComponent(isbnLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(titleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(20, Short.MAX_VALUE))
         );
         detailsPanelLayout.setVerticalGroup(
             detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

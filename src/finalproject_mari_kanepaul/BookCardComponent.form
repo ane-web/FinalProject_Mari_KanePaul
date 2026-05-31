@@ -127,11 +127,11 @@
                       <Component id="dueLabel" min="-2" max="-2" attributes="0"/>
                       <Component id="borrowerLabel" min="-2" max="-2" attributes="0"/>
                       <Component id="shelfLabel" min="-2" max="-2" attributes="0"/>
-                      <Component id="titleLabel" min="-2" pref="228" max="-2" attributes="0"/>
                       <Component id="authorLabel" min="-2" pref="146" max="-2" attributes="0"/>
                       <Component id="isbnLabel" alignment="0" min="-2" pref="158" max="-2" attributes="0"/>
+                      <Component id="titleLabel" alignment="0" min="-2" pref="237" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="29" max="32767" attributes="0"/>
+                  <EmptySpace pref="20" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>

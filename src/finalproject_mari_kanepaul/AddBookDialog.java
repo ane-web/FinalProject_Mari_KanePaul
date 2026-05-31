@@ -4,6 +4,8 @@
  */
 package finalproject_mari_kanepaul;
 
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author Kane
@@ -18,6 +20,52 @@ public class AddBookDialog extends javax.swing.JDialog {
     public AddBookDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        loadShelves();
+    }
+    
+    private void loadShelves() {
+        shelfComboBox.removeAllItems();
+
+        ShelvesDAO shelvesDAO = new ShelvesDAO();
+        for (String shelfCode : shelvesDAO.getShelfCodes()) {
+            shelfComboBox.addItem(shelfCode);
+        }
+
+        if (shelfComboBox.getItemCount() == 0) {
+            shelfComboBox.addItem("A-12");
+        }
+
+        shelfComboBox.setEditable(true);
+    }
+    
+    private void saveBook() {
+        String title = titleField.getText().trim();
+        String author = authorField.getText().trim();
+        String isbn = isbnField.getText().trim();
+        String genre = genreField.getText().trim();
+        String shelf = String.valueOf(shelfComboBox.getSelectedItem()).trim();
+
+        if (title.isEmpty() || author.isEmpty() || isbn.isEmpty() || shelf.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in title, author, ISBN, and shelf.");
+            return;
+        }
+
+        if (genre.isEmpty()) {
+            genre = "General";
+        }
+
+        int shelfId = new ShelvesDAO().getOrCreateShelfId(shelf);
+        if (shelfId == -1) {
+            JOptionPane.showMessageDialog(this, "Could not save shelf.");
+            return;
+        }
+
+        boolean saved = new BooksDAO().addBookWithCopy(isbn, title, author, genre, shelfId);
+        if (saved) {
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Could not save book.");
+        }
     }
 
     /**
@@ -28,79 +76,157 @@ public class AddBookDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        jLabel1 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
+        formPanel = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        titleField = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        authorField = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        isbnField = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        genreField = new javax.swing.JTextField();
+        jLabel6 = new javax.swing.JLabel();
+        shelfComboBox = new javax.swing.JComboBox<>();
+        buttonPanel = new javax.swing.JPanel();
+        cancelButton = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Add Book");
+        setResizable(false);
 
-        jLabel1.setText("jLabel1");
+        formPanel.setLayout(new java.awt.GridBagLayout());
 
-        jTextField1.setText("jTextField1");
+        jLabel2.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        jLabel2.setText("Title:");
+        formPanel.add(jLabel2, new java.awt.GridBagConstraints());
 
-        jTextField2.setText("jTextField1");
+        titleField.setColumns(24);
+        titleField.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
+        titleField.setMinimumSize(new java.awt.Dimension(120, 30));
+        titleField.addActionListener(this::titleFieldActionPerformed);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 8, 12);
+        formPanel.add(titleField, gridBagConstraints);
 
-        jTextField3.setText("jTextField1");
+        jLabel3.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        jLabel3.setText("Author:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        formPanel.add(jLabel3, gridBagConstraints);
 
-        jTextField4.setText("jTextField1");
+        authorField.setColumns(24);
+        authorField.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
+        authorField.setMinimumSize(new java.awt.Dimension(120, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 8, 12);
+        formPanel.add(authorField, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(51, 51, 51)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(278, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(61, 61, 61)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(268, Short.MAX_VALUE)))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(71, 71, 71)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(258, Short.MAX_VALUE)))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(81, 81, 81)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(248, Short.MAX_VALUE)))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(29, 29, 29)
-                .addComponent(jLabel1)
-                .addGap(45, 45, 45)
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(188, Short.MAX_VALUE))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(100, 100, 100)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(178, Short.MAX_VALUE)))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(110, 110, 110)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(168, Short.MAX_VALUE)))
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addGap(120, 120, 120)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(158, Short.MAX_VALUE)))
-        );
+        jLabel4.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        jLabel4.setText("ISBN:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        formPanel.add(jLabel4, gridBagConstraints);
+
+        isbnField.setColumns(24);
+        isbnField.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
+        isbnField.setMinimumSize(new java.awt.Dimension(120, 30));
+        isbnField.addActionListener(this::isbnFieldActionPerformed);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 8, 12);
+        formPanel.add(isbnField, gridBagConstraints);
+
+        jLabel5.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        jLabel5.setText("Genre:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        formPanel.add(jLabel5, gridBagConstraints);
+
+        genreField.setColumns(24);
+        genreField.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
+        genreField.setMinimumSize(new java.awt.Dimension(120, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 8, 12);
+        formPanel.add(genreField, gridBagConstraints);
+
+        jLabel6.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        jLabel6.setText("Shelf:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        formPanel.add(jLabel6, gridBagConstraints);
+
+        shelfComboBox.setEditable(true);
+        shelfComboBox.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
+        shelfComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        shelfComboBox.setPreferredSize(new java.awt.Dimension(250, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.ipadx = 178;
+        gridBagConstraints.ipady = 8;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(8, 5, 8, 12);
+        formPanel.add(shelfComboBox, gridBagConstraints);
+
+        getContentPane().add(formPanel, java.awt.BorderLayout.CENTER);
+
+        buttonPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+
+        cancelButton.setText("Cancel");
+        cancelButton.addActionListener(this::cancelButtonActionPerformed);
+        buttonPanel.add(cancelButton);
+
+        saveButton.setBackground(new java.awt.Color(25, 118, 210));
+        saveButton.setForeground(new java.awt.Color(255, 255, 255));
+        saveButton.setText("Save");
+        saveButton.addActionListener(this::saveButtonActionPerformed);
+        buttonPanel.add(saveButton);
+
+        getContentPane().add(buttonPanel, java.awt.BorderLayout.SOUTH);
 
         setSize(new java.awt.Dimension(650, 350));
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void titleFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_titleFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_titleFieldActionPerformed
+
+    private void isbnFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isbnFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_isbnFieldActionPerformed
+
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+    dispose();        
+    }//GEN-LAST:event_cancelButtonActionPerformed
+
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+    saveBook();       
+    }//GEN-LAST:event_saveButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -140,10 +266,19 @@ public class AddBookDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JTextField authorField;
+    private javax.swing.JPanel buttonPanel;
+    private javax.swing.JButton cancelButton;
+    private javax.swing.JPanel formPanel;
+    private javax.swing.JTextField genreField;
+    private javax.swing.JTextField isbnField;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JButton saveButton;
+    private javax.swing.JComboBox<String> shelfComboBox;
+    private javax.swing.JTextField titleField;
     // End of variables declaration//GEN-END:variables
 }

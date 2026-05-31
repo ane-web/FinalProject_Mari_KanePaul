@@ -18,12 +18,15 @@ public class MainDashboard extends javax.swing.JFrame {
      * Creates new form MainDashboard
      */
     public MainDashboard() {
-        initComponents();
-        loadBookCards();
-        JLayeredPane layeredPane = getLayeredPane();
-        layeredPane.add(floatingButton, JLayeredPane.PALETTE_LAYER);
-        
-    }
+    initComponents();
+    setupDashboard();
+    loadShelfFilter();
+    loadBookCards();
+
+    JLayeredPane layeredPane = getLayeredPane();
+    layeredPane.add(floatingButton, JLayeredPane.PALETTE_LAYER);
+    positionFloatingButton();
+}
     
     private void positionFloatingButton() {
     if (floatingButton == null) return;
@@ -36,16 +39,100 @@ public class MainDashboard extends javax.swing.JFrame {
     
     floatingButton.setLocation(x, y);
 }
+    private void loadShelfFilter() {
+    Object selected = shelfFilterComboBox.getSelectedItem();
+
+    shelfFilterComboBox.removeAllItems();
+    shelfFilterComboBox.addItem("All Shelves");
+
+    ShelvesDAO shelvesDAO = new ShelvesDAO();
+    for (String shelfCode : shelvesDAO.getShelfCodes()) {
+        shelfFilterComboBox.addItem(shelfCode);
+    }
+
+    if (selected != null) {
+        shelfFilterComboBox.setSelectedItem(selected);
+    }
+}
+    
+ private void setupDashboard() {
+    booksGridPanel.setLayout(new java.awt.GridLayout(0, 5, 25, 25));
+    booksGridPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 30, 30));
+
+    jScrollPane1.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
+    searchBar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        @Override
+        public void insertUpdate(javax.swing.event.DocumentEvent e) {
+            loadBookCards();
+        }
+
+        @Override
+        public void removeUpdate(javax.swing.event.DocumentEvent e) {
+            loadBookCards();
+        }
+
+        @Override
+        public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            loadBookCards();
+        }
+    });
+
+    jComboBox1.addActionListener(e -> loadBookCards());
+    shelfFilterComboBox.addActionListener(e -> loadBookCards());
+}
+ 
+ private void handleBookAction(int copyId, boolean checkedOut) {
+    LoansDAO loansDAO = new LoansDAO();
+    boolean success;
+
+    if (checkedOut) {
+        success = loansDAO.checkInBook(copyId);
+    } else {
+        String borrowerName = javax.swing.JOptionPane.showInputDialog(
+                this,
+                "Borrower name:",
+                "Check Out Book",
+                javax.swing.JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (borrowerName == null || borrowerName.trim().isEmpty()) {
+            return;
+        }
+
+        int userId = new UsersDAO().getOrCreateUser(borrowerName.trim());
+        if (userId == -1) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Could not create borrower.");
+            return;
+        }
+
+        success = loansDAO.checkOutBook(copyId, userId);
+    }
+
+    if (!success) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Database update failed.");
+    }
+
+    loadShelfFilter();
+    loadBookCards();
+}
  
     private void loadBookCards() {
-    
     booksGridPanel.removeAll();
+
     BooksDAO booksDAO = new BooksDAO();
     jLabel3.setText(String.valueOf(booksDAO.countAllCopies()));
     jLabel5.setText(String.valueOf(booksDAO.countAvailableCopies()));
     jLabel7.setText(String.valueOf(booksDAO.countCheckedOutCopies()));
-    
-    for (Object[] row : booksDAO.getBookCards()) {
+
+    String searchText = searchBar.getText().trim();
+    String statusFilter = String.valueOf(jComboBox1.getSelectedItem());
+    String shelfFilter = String.valueOf(shelfFilterComboBox.getSelectedItem());
+
+    for (Object[] row : booksDAO.getBookCards(searchText, statusFilter, shelfFilter)) {
+        int copyId = ((Number) row[0]).intValue();
         String title = (String) row[1];
         String author = (String) row[2];
         String isbn = (String) row[3];
@@ -57,20 +144,70 @@ public class MainDashboard extends javax.swing.JFrame {
         boolean checkedOut = "Checked Out".equalsIgnoreCase(status);
 
         BookCardComponent card = new BookCardComponent();
-        card.setBookData(
-                title,
-                author,
-                isbn,
-                shelf,
-                checkedOut,
-                borrower,
-                dueDate
-        );
+        card.setBookData(title, author, isbn, shelf, checkedOut, borrower, dueDate);
+        card.setActionListener(e -> handleBookAction(copyId, checkedOut));
+        card.setMenuActions(
+        e -> editBook(copyId, title, author, isbn, shelf),
+        e -> deleteBook(copyId, title)
+);
 
         booksGridPanel.add(card);
     }
+
     booksGridPanel.revalidate();
     booksGridPanel.repaint();
+}
+    
+    private void editBook(int copyId, String oldTitle, String oldAuthor, String oldIsbn, String oldShelf) {
+    String title = javax.swing.JOptionPane.showInputDialog(this, "Title:", oldTitle);
+    if (title == null || title.trim().isEmpty()) return;
+
+    String author = javax.swing.JOptionPane.showInputDialog(this, "Author:", oldAuthor);
+    if (author == null || author.trim().isEmpty()) return;
+
+    String genre = javax.swing.JOptionPane.showInputDialog(this, "Genre:", "General");
+    if (genre == null || genre.trim().isEmpty()) genre = "General";
+
+    String shelf = javax.swing.JOptionPane.showInputDialog(this, "Shelf:", oldShelf);
+    if (shelf == null || shelf.trim().isEmpty()) return;
+
+    int shelfId = new ShelvesDAO().getOrCreateShelfId(shelf.trim());
+
+    boolean updated = new BooksDAO().updateBookCopy(
+            copyId,
+            title.trim(),
+            author.trim(),
+            genre.trim(),
+            shelfId
+    );
+
+    if (!updated) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Could not update book.");
+    }
+
+    loadShelfFilter();
+    loadBookCards();
+}
+
+private void deleteBook(int copyId, String title) {
+    int choice = javax.swing.JOptionPane.showConfirmDialog(
+            this,
+            "Delete \"" + title + "\"?",
+            "Delete Book",
+            javax.swing.JOptionPane.YES_NO_OPTION
+    );
+
+    if (choice != javax.swing.JOptionPane.YES_OPTION) {
+        return;
+    }
+
+    boolean deleted = new BooksDAO().deleteBookCopy(copyId);
+
+    if (!deleted) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Could not delete book.");
+    }
+
+    loadBookCards();
 }
 
     /**
@@ -87,8 +224,8 @@ public class MainDashboard extends javax.swing.JFrame {
         floatingButton.setSize(56,56);
         floatingButton.putClientProperty("JButton.arc", 999);
         headerWrapperPanel = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        TitleLabel = new javax.swing.JLabel();
+        subLabel = new javax.swing.JLabel();
         statsPanel = new javax.swing.JPanel();
         totalBooksCard = new javax.swing.JPanel();
         totalBooksCard.putClientProperty("FlatLaf.style", "arc: 12");
@@ -109,8 +246,8 @@ public class MainDashboard extends javax.swing.JFrame {
         searchBar.putClientProperty("JTextField.showClearButton", true);
         jComboBox1 = new javax.swing.JComboBox<>();
         jComboBox1.putClientProperty("JComponent.roundRect", true);
-        jComboBox2 = new javax.swing.JComboBox<>();
-        jComboBox2.putClientProperty("JComponent.roundRect", true);
+        shelfFilterComboBox = new javax.swing.JComboBox<>();
+        shelfFilterComboBox.putClientProperty("JComponent.roundRect", true);
         jScrollPane1 = new javax.swing.JScrollPane();
         booksGridPanel = new javax.swing.JPanel();
 
@@ -123,6 +260,7 @@ public class MainDashboard extends javax.swing.JFrame {
         floatingButton.addActionListener(this::floatingButtonActionPerformed);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Library Management System");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
@@ -133,28 +271,28 @@ public class MainDashboard extends javax.swing.JFrame {
         headerWrapperPanel.setPreferredSize(new java.awt.Dimension(1000, 320));
         headerWrapperPanel.setLayout(new java.awt.GridBagLayout());
 
-        jLabel1.setFont(new java.awt.Font("SansSerif", 0, 36)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(0, 0, 0));
-        jLabel1.setText("Library Management System");
+        TitleLabel.setFont(new java.awt.Font("SansSerif", 0, 36)); // NOI18N
+        TitleLabel.setForeground(new java.awt.Color(0, 0, 0));
+        TitleLabel.setText("Library Management System");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 10, 0, 0);
-        headerWrapperPanel.add(jLabel1, gridBagConstraints);
+        headerWrapperPanel.add(TitleLabel, gridBagConstraints);
 
-        jLabel2.setFont(new java.awt.Font("SansSerif", 0, 18)); // NOI18N
-        jLabel2.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel2.setText("Track and manage your book collection.");
+        subLabel.setFont(new java.awt.Font("SansSerif", 0, 18)); // NOI18N
+        subLabel.setForeground(new java.awt.Color(102, 102, 102));
+        subLabel.setText("Track and manage your book collection.");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 10, 10, 0);
-        headerWrapperPanel.add(jLabel2, gridBagConstraints);
+        headerWrapperPanel.add(subLabel, gridBagConstraints);
 
         statsPanel.setOpaque(false);
-        statsPanel.setPreferredSize(new java.awt.Dimension(1000, 100));
+        statsPanel.setPreferredSize(new java.awt.Dimension(1000, 160));
         statsPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 5));
 
         totalBooksCard.setBackground(new java.awt.Color(25, 118, 210));
@@ -252,9 +390,9 @@ public class MainDashboard extends javax.swing.JFrame {
         gridBagConstraints.weightx = 1.0;
         headerWrapperPanel.add(statsPanel, gridBagConstraints);
 
-        filterBarPanel.setMinimumSize(new java.awt.Dimension(500, 60));
+        filterBarPanel.setMinimumSize(new java.awt.Dimension(1000, 50));
         filterBarPanel.setOpaque(false);
-        filterBarPanel.setPreferredSize(new java.awt.Dimension(300, 520));
+        filterBarPanel.setPreferredSize(new java.awt.Dimension(1000, 70));
         filterBarPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 10));
 
         searchBar.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
@@ -269,6 +407,11 @@ public class MainDashboard extends javax.swing.JFrame {
                 searchBarFocusLost(evt);
             }
         });
+        searchBar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                searchBarKeyTyped(evt);
+            }
+        });
         filterBarPanel.add(searchBar);
 
         jComboBox1.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
@@ -277,11 +420,11 @@ public class MainDashboard extends javax.swing.JFrame {
         jComboBox1.setPreferredSize(new java.awt.Dimension(100, 35));
         filterBarPanel.add(jComboBox1);
 
-        jComboBox2.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Shelves", "A-12", "B-05", "A-08", "C-14" }));
-        jComboBox2.setMinimumSize(new java.awt.Dimension(91, 25));
-        jComboBox2.setPreferredSize(new java.awt.Dimension(100, 35));
-        filterBarPanel.add(jComboBox2);
+        shelfFilterComboBox.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
+        shelfFilterComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Shelves", "A-12", "B-05", "A-08", "C-14" }));
+        shelfFilterComboBox.setMinimumSize(new java.awt.Dimension(91, 25));
+        shelfFilterComboBox.setPreferredSize(new java.awt.Dimension(100, 35));
+        filterBarPanel.add(shelfFilterComboBox);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -297,12 +440,12 @@ public class MainDashboard extends javax.swing.JFrame {
         jScrollPane1.setPreferredSize(new java.awt.Dimension(1000, 480));
 
         booksGridPanel.setBackground(new java.awt.Color(250, 250, 250));
-        booksGridPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 25, 25));
+        booksGridPanel.setLayout(new java.awt.GridLayout(0, 25, 3, 25));
         jScrollPane1.setViewportView(booksGridPanel);
 
         getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
-        setSize(new java.awt.Dimension(1014, 808));
+        setSize(new java.awt.Dimension(1614, 908));
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
@@ -319,8 +462,15 @@ public class MainDashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_formComponentResized
 
     private void floatingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floatingButtonActionPerformed
-        new AddBookDialog(this,true).setVisible(true);
+        AddBookDialog dialog = new AddBookDialog(this, true);
+    dialog.setVisible(true);
+    loadShelfFilter();
+    loadBookCards();
     }//GEN-LAST:event_floatingButtonActionPerformed
+
+    private void searchBarKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBarKeyTyped
+        // TODO add your handling code here:
+    }//GEN-LAST:event_searchBarKeyTyped
 
     /**
      * @param args the command line arguments
@@ -348,6 +498,7 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel TitleLabel;
     private javax.swing.JPanel availableCard;
     private javax.swing.JPanel booksGridPanel;
     private javax.swing.JPanel checkedOutCard;
@@ -355,9 +506,6 @@ public class MainDashboard extends javax.swing.JFrame {
     private javax.swing.JButton floatingButton;
     private javax.swing.JPanel headerWrapperPanel;
     private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -366,7 +514,9 @@ public class MainDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField searchBar;
+    private javax.swing.JComboBox<String> shelfFilterComboBox;
     private javax.swing.JPanel statsPanel;
+    private javax.swing.JLabel subLabel;
     private javax.swing.JPanel totalBooksCard;
     // End of variables declaration//GEN-END:variables
 }
