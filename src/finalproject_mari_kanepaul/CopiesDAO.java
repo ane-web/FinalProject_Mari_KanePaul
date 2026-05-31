@@ -20,7 +20,7 @@ public class CopiesDAO {
             
             stmt.setString(1, isbn);
             stmt.setInt(2, shelfId);
-            stmt.setString(3, "Available"); // Explicitly setting status on creation
+            stmt.setString(3, "Available"); 
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

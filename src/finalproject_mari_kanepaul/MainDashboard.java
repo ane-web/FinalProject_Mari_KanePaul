@@ -5,6 +5,7 @@
 package finalproject_mari_kanepaul;
 
 import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -19,10 +20,8 @@ public class MainDashboard extends javax.swing.JFrame {
      */
     public MainDashboard() {
     initComponents();
-    setupDashboard();
     loadShelfFilter();
     loadBookCards();
-
     JLayeredPane layeredPane = getLayeredPane();
     layeredPane.add(floatingButton, JLayeredPane.PALETTE_LAYER);
     positionFloatingButton();
@@ -54,35 +53,6 @@ public class MainDashboard extends javax.swing.JFrame {
         shelfFilterComboBox.setSelectedItem(selected);
     }
 }
-    
- private void setupDashboard() {
-    booksGridPanel.setLayout(new java.awt.GridLayout(0, 5, 25, 25));
-    booksGridPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 30, 30));
-
-    jScrollPane1.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
-
-    searchBar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-        @Override
-        public void insertUpdate(javax.swing.event.DocumentEvent e) {
-            loadBookCards();
-        }
-
-        @Override
-        public void removeUpdate(javax.swing.event.DocumentEvent e) {
-            loadBookCards();
-        }
-
-        @Override
-        public void changedUpdate(javax.swing.event.DocumentEvent e) {
-            loadBookCards();
-        }
-    });
-
-    jComboBox1.addActionListener(e -> loadBookCards());
-    shelfFilterComboBox.addActionListener(e -> loadBookCards());
-}
  
  private void handleBookAction(int copyId, boolean checkedOut) {
     LoansDAO loansDAO = new LoansDAO();
@@ -91,30 +61,20 @@ public class MainDashboard extends javax.swing.JFrame {
     if (checkedOut) {
         success = loansDAO.checkInBook(copyId);
     } else {
-        String borrowerName = javax.swing.JOptionPane.showInputDialog(
-                this,
-                "Borrower name:",
-                "Check Out Book",
-                javax.swing.JOptionPane.PLAIN_MESSAGE
-        );
-
-        if (borrowerName == null || borrowerName.trim().isEmpty()) {
+        String borrowerName = JOptionPane.showInputDialog( this, "Borrower name:", "Check Out Book", JOptionPane.PLAIN_MESSAGE );
+        if ( borrowerName == null || borrowerName.trim().isEmpty() ) {
             return;
         }
-
-        int userId = new UsersDAO().getOrCreateUser(borrowerName.trim());
-        if (userId == -1) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Could not create borrower.");
+        int userId = new UsersDAO().getOrCreateUser( borrowerName.trim() );
+        if ( userId == -1 ) {
+            JOptionPane.showMessageDialog( this, "Could not create borrower." );
             return;
         }
-
-        success = loansDAO.checkOutBook(copyId, userId);
+        success = loansDAO.checkOutBook( copyId, userId );
     }
-
     if (!success) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Database update failed.");
+        JOptionPane.showMessageDialog(this, "Database update failed.");
     }
-
     loadShelfFilter();
     loadBookCards();
 }
@@ -132,6 +92,7 @@ public class MainDashboard extends javax.swing.JFrame {
     String shelfFilter = String.valueOf(shelfFilterComboBox.getSelectedItem());
 
     for (Object[] row : booksDAO.getBookCards(searchText, statusFilter, shelfFilter)) {
+        
         int copyId = ((Number) row[0]).intValue();
         String title = (String) row[1];
         String author = (String) row[2];
@@ -144,72 +105,21 @@ public class MainDashboard extends javax.swing.JFrame {
         boolean checkedOut = "Checked Out".equalsIgnoreCase(status);
 
         BookCardComponent card = new BookCardComponent();
-        card.setBookData(title, author, isbn, shelf, checkedOut, borrower, dueDate);
+        
+        card.setBookData(copyId, title, author, isbn, shelf, checkedOut, borrower, dueDate);
+        
         card.setActionListener(e -> handleBookAction(copyId, checkedOut));
-        card.setMenuActions(
-        e -> editBook(copyId, title, author, isbn, shelf),
-        e -> deleteBook(copyId, title)
-);
-
+        
+        card.setRefreshAction(() -> {
+        loadShelfFilter();
+        loadBookCards();
+        });
         booksGridPanel.add(card);
     }
-
     booksGridPanel.revalidate();
     booksGridPanel.repaint();
 }
     
-    private void editBook(int copyId, String oldTitle, String oldAuthor, String oldIsbn, String oldShelf) {
-    String title = javax.swing.JOptionPane.showInputDialog(this, "Title:", oldTitle);
-    if (title == null || title.trim().isEmpty()) return;
-
-    String author = javax.swing.JOptionPane.showInputDialog(this, "Author:", oldAuthor);
-    if (author == null || author.trim().isEmpty()) return;
-
-    String genre = javax.swing.JOptionPane.showInputDialog(this, "Genre:", "General");
-    if (genre == null || genre.trim().isEmpty()) genre = "General";
-
-    String shelf = javax.swing.JOptionPane.showInputDialog(this, "Shelf:", oldShelf);
-    if (shelf == null || shelf.trim().isEmpty()) return;
-
-    int shelfId = new ShelvesDAO().getOrCreateShelfId(shelf.trim());
-
-    boolean updated = new BooksDAO().updateBookCopy(
-            copyId,
-            title.trim(),
-            author.trim(),
-            genre.trim(),
-            shelfId
-    );
-
-    if (!updated) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Could not update book.");
-    }
-
-    loadShelfFilter();
-    loadBookCards();
-}
-
-private void deleteBook(int copyId, String title) {
-    int choice = javax.swing.JOptionPane.showConfirmDialog(
-            this,
-            "Delete \"" + title + "\"?",
-            "Delete Book",
-            javax.swing.JOptionPane.YES_NO_OPTION
-    );
-
-    if (choice != javax.swing.JOptionPane.YES_OPTION) {
-        return;
-    }
-
-    boolean deleted = new BooksDAO().deleteBookCopy(copyId);
-
-    if (!deleted) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Could not delete book.");
-    }
-
-    loadBookCards();
-}
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -408,6 +318,9 @@ private void deleteBook(int copyId, String title) {
             }
         });
         searchBar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                searchBarKeyReleased(evt);
+            }
             public void keyTyped(java.awt.event.KeyEvent evt) {
                 searchBarKeyTyped(evt);
             }
@@ -418,12 +331,14 @@ private void deleteBook(int copyId, String title) {
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Books", "Available", "Checked Out" }));
         jComboBox1.setMinimumSize(new java.awt.Dimension(103, 25));
         jComboBox1.setPreferredSize(new java.awt.Dimension(100, 35));
+        jComboBox1.addActionListener(this::jComboBox1ActionPerformed);
         filterBarPanel.add(jComboBox1);
 
         shelfFilterComboBox.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
         shelfFilterComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Shelves", "A-12", "B-05", "A-08", "C-14" }));
         shelfFilterComboBox.setMinimumSize(new java.awt.Dimension(91, 25));
         shelfFilterComboBox.setPreferredSize(new java.awt.Dimension(100, 35));
+        shelfFilterComboBox.addActionListener(this::shelfFilterComboBoxActionPerformed);
         filterBarPanel.add(shelfFilterComboBox);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -436,11 +351,14 @@ private void deleteBook(int copyId, String title) {
         getContentPane().add(headerWrapperPanel, java.awt.BorderLayout.PAGE_START);
 
         jScrollPane1.setBorder(null);
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane1.setMinimumSize(new java.awt.Dimension(1000, 480));
         jScrollPane1.setPreferredSize(new java.awt.Dimension(1000, 480));
+        jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
         booksGridPanel.setBackground(new java.awt.Color(250, 250, 250));
-        booksGridPanel.setLayout(new java.awt.GridLayout(0, 25, 3, 25));
+        booksGridPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 30, 30, 30));
+        booksGridPanel.setLayout(new java.awt.GridLayout(0, 5, 25, 25));
         jScrollPane1.setViewportView(booksGridPanel);
 
         getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
@@ -471,6 +389,20 @@ private void deleteBook(int copyId, String title) {
     private void searchBarKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBarKeyTyped
         // TODO add your handling code here:
     }//GEN-LAST:event_searchBarKeyTyped
+
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    loadBookCards();        
+    }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void searchBarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBarKeyReleased
+    loadBookCards();        
+    }//GEN-LAST:event_searchBarKeyReleased
+
+    private void shelfFilterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shelfFilterComboBoxActionPerformed
+    if (shelfFilterComboBox.getSelectedItem() != null) {
+        loadBookCards();
+    }        
+    }//GEN-LAST:event_shelfFilterComboBoxActionPerformed
 
     /**
      * @param args the command line arguments

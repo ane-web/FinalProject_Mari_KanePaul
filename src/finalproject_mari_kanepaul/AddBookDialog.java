@@ -33,9 +33,7 @@ public class AddBookDialog extends javax.swing.JDialog {
 
         if (shelfComboBox.getItemCount() == 0) {
             shelfComboBox.addItem("A-12");
-        }
-
-        shelfComboBox.setEditable(true);
+        } 
     }
     
     private void saveBook() {

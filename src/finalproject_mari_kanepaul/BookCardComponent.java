@@ -3,20 +3,23 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package finalproject_mari_kanepaul;
-import javax.swing.BorderFactory;
-import java.awt.Color;
 /**
  *
  * @author Kane
  */
 public class BookCardComponent extends javax.swing.JPanel {
-
+private int copyId;
+private String currentTitle;
+private String currentAuthor;
+private String currentIsbn;
+private String currentShelf;
+private Runnable refreshAction;
     /**
      * Creates new form BookCardComponent
      */
     public BookCardComponent() {
         initComponents();
-        styleCard();
+        putClientProperty("FlatLaf.style", "arc: 12");
     }
     
     public void setActionListener(java.awt.event.ActionListener listener) {
@@ -26,8 +29,14 @@ public class BookCardComponent extends javax.swing.JPanel {
     actionButton.addActionListener(listener);
 }
     
-    public void setBookData(String title, String author, String isbn, String shelf,
+    public void setBookData(int copyId, String title, String author, String isbn, String shelf,
         boolean checkedOut, String borrower, String dueDate) {
+
+    this.copyId = copyId;
+    this.currentTitle = title;
+    this.currentAuthor = author;
+    this.currentIsbn = isbn;
+    this.currentShelf = shelf;
 
     titleLabel.setText(title);
     authorLabel.setText("by " + author);
@@ -57,35 +66,15 @@ public class BookCardComponent extends javax.swing.JPanel {
     }
 }
     
-    private void styleCard() {
-    putClientProperty("FlatLaf.style", "arc: 12");
-
-    statusLabel.putClientProperty("FlatLaf.style", "arc: 999");
-    statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-
-    actionButton.putClientProperty("JButton.arc", 8);
-    actionButton.setBackground(new Color(25, 118, 210));
-    actionButton.setForeground(Color.WHITE);
-
-    jButton1.setText("\u22EE");
+    public void setRefreshAction(Runnable refreshAction) {
+        this.refreshAction = refreshAction;
     }
-    
-    public void setMenuActions(java.awt.event.ActionListener editListener,
-        java.awt.event.ActionListener deleteListener) {
 
-    javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
-
-    javax.swing.JMenuItem editItem = new javax.swing.JMenuItem("Edit");
-    javax.swing.JMenuItem deleteItem = new javax.swing.JMenuItem("Delete");
-
-    editItem.addActionListener(editListener);
-    deleteItem.addActionListener(deleteListener);
-
-    menu.add(editItem);
-    menu.add(deleteItem);
-
-    jButton1.addActionListener(e -> menu.show(jButton1, 0, jButton1.getHeight()));
-}
+    private void refreshDashboard() {
+        if (refreshAction != null) {
+            refreshAction.run();
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -97,6 +86,9 @@ public class BookCardComponent extends javax.swing.JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        cardPopupMenu = new javax.swing.JPopupMenu();
+        editMenuItem = new javax.swing.JMenuItem();
+        deleteMenuItem = new javax.swing.JMenuItem();
         topPanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
@@ -110,6 +102,14 @@ public class BookCardComponent extends javax.swing.JPanel {
         buttonPanel = new javax.swing.JPanel();
         actionButton = new javax.swing.JButton();
 
+        editMenuItem.setText("Edit");
+        editMenuItem.addActionListener(this::editMenuItemActionPerformed);
+        cardPopupMenu.add(editMenuItem);
+
+        deleteMenuItem.setText("Delete");
+        deleteMenuItem.addActionListener(this::deleteMenuItemActionPerformed);
+        cardPopupMenu.add(deleteMenuItem);
+
         setBackground(new java.awt.Color(255, 255, 255));
         setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
         setPreferredSize(new java.awt.Dimension(275, 390));
@@ -122,15 +122,18 @@ public class BookCardComponent extends javax.swing.JPanel {
         statusLabel.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
         statusLabel.setForeground(new java.awt.Color(255, 255, 255));
         statusLabel.setText("Available");
+        statusLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 10, 4, 10));
         statusLabel.setOpaque(true);
+        statusLabel.putClientProperty("FlatLaf.style", "arc: 999");
 
         jButton1.setFont(new java.awt.Font("SansSerif", 0, 18)); // NOI18N
         jButton1.setForeground(new java.awt.Color(0, 0, 0));
-        jButton1.setText("⋮");
+        jButton1.setText("\u22EE");
         jButton1.setBorderPainted(false);
         jButton1.setContentAreaFilled(false);
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton1.setFocusPainted(false);
+        jButton1.addActionListener(this::jButton1ActionPerformed);
 
         javax.swing.GroupLayout topPanelLayout = new javax.swing.GroupLayout(topPanel);
         topPanel.setLayout(topPanelLayout);
@@ -139,7 +142,7 @@ public class BookCardComponent extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topPanelLayout.createSequentialGroup()
                 .addGap(16, 16, 16)
                 .addComponent(statusLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 150, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
                 .addComponent(jButton1)
                 .addGap(18, 18, 18))
         );
@@ -215,10 +218,13 @@ public class BookCardComponent extends javax.swing.JPanel {
         buttonPanel.setPreferredSize(new java.awt.Dimension(347, 60));
         buttonPanel.setLayout(new java.awt.GridBagLayout());
 
+        actionButton.setBackground(new java.awt.Color(25, 118, 210));
         actionButton.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
+        actionButton.setForeground(new java.awt.Color(255, 255, 255));
         actionButton.setText("Check Out");
         actionButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         actionButton.setPreferredSize(new java.awt.Dimension(180, 30));
+        actionButton.putClientProperty("JButton.arc", 8);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -230,14 +236,76 @@ public class BookCardComponent extends javax.swing.JPanel {
         add(buttonPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    cardPopupMenu.show(jButton1, 0, jButton1.getHeight());        
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void editMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editMenuItemActionPerformed
+    
+    String title = javax.swing.JOptionPane.showInputDialog(null, "Title:", currentTitle);
+    if (title == null || title.trim().isEmpty()) return;
+
+    String author = javax.swing.JOptionPane.showInputDialog(null, "Author:", currentAuthor);
+    if (author == null || author.trim().isEmpty()) return;
+
+    String genre = javax.swing.JOptionPane.showInputDialog(null, "Genre:", "General");
+    if (genre == null || genre.trim().isEmpty()) genre = "General";
+
+    String shelf = javax.swing.JOptionPane.showInputDialog(null, "Shelf:", currentShelf);
+    if (shelf == null || shelf.trim().isEmpty()) return;
+
+    int shelfId = new ShelvesDAO().getOrCreateShelfId(shelf.trim());
+
+    boolean updated = new BooksDAO().updateBookCopy(
+            copyId,
+            title.trim(),
+            author.trim(),
+            genre.trim(),
+            shelfId
+    );
+
+    if (!updated) {
+        javax.swing.JOptionPane.showMessageDialog(null, "Could not update book.");
+    }
+
+    refreshDashboard();
+    
+    }//GEN-LAST:event_editMenuItemActionPerformed
+
+    private void deleteMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteMenuItemActionPerformed
+    
+        int choice = javax.swing.JOptionPane.showConfirmDialog(
+            null,
+            "Delete \"" + currentTitle + "\"?",
+            "Delete Book",
+            javax.swing.JOptionPane.YES_NO_OPTION
+    );
+
+    if (choice != javax.swing.JOptionPane.YES_OPTION) {
+        return;
+    }
+
+    boolean deleted = new BooksDAO().deleteBookCopy(copyId);
+
+    if (!deleted) {
+        javax.swing.JOptionPane.showMessageDialog(null, "Could not delete book.");
+    }
+
+    refreshDashboard();
+    
+    }//GEN-LAST:event_deleteMenuItemActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton actionButton;
     private javax.swing.JLabel authorLabel;
     private javax.swing.JLabel borrowerLabel;
     private javax.swing.JPanel buttonPanel;
+    private javax.swing.JPopupMenu cardPopupMenu;
+    private javax.swing.JMenuItem deleteMenuItem;
     private javax.swing.JPanel detailsPanel;
     private javax.swing.JLabel dueLabel;
+    private javax.swing.JMenuItem editMenuItem;
     private javax.swing.JLabel isbnLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel shelfLabel;

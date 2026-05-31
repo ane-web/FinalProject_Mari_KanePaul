@@ -21,22 +21,19 @@ public class BooksDAO {
         String insertSql = "INSERT INTO books (isbn, title, author, genre) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection()) {
-            // 1. Check if the master book information exists
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
                 checkStmt.setString(1, isbn);
                 try (ResultSet rs = checkStmt.executeQuery()) {
                     if (rs.next()) {
-                        return; // Book exists, no action required
+                        return; 
                     }
                 }
-            }
-
-            // 2. Insert new master book profile if missing
+            }       
             try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                 insertStmt.setString(1, isbn);
                 insertStmt.setString(2, title);
                 insertStmt.setString(3, author);
-                insertStmt.setString(4, "General"); // Default Genre placeholder
+                insertStmt.setString(4, "General"); 
                 insertStmt.executeUpdate();
             }
         } catch (SQLException e) {
